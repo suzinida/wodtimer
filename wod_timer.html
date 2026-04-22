@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>WOD Timer - 스마일 크로스핏</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Black+Han+Sans&family=JetBrains+Mono:wght@700;800&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;
+  --accent:#00ff88;
+  --prep:#ffb400;
+  --count:#ff2d55;
+  --work:#00ff88;
+  --rest:#00b4ff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Noto Sans KR',sans-serif;position:fixed}
+body{display:flex;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;touch-action:none}
+
+.stage{
+  width:1920px;height:1080px;
+  position:relative;
+  background:var(--bg);
+  transform-origin:center center;
+  overflow:hidden;
+  transition:background 0.8s ease;
+  flex-shrink:0;
+}
+
+/* Rotation prompt for portrait mode */
+.rotate-prompt{
+  display:none;
+  position:fixed;inset:0;
+  background:#0a0e1a;
+  z-index:9999;
+  flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;text-align:center;padding:40px;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.rotate-prompt.show{display:flex}
+.rotate-prompt .icon{
+  font-size:100px;margin-bottom:30px;
+  animation:rotateHint 2s ease-in-out infinite;
+}
+@keyframes rotateHint{
+  0%,100%{transform:rotate(0deg)}
+  50%{transform:rotate(90deg)}
+}
+.rotate-prompt h2{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:36px;color:#00ff88;margin-bottom:15px;
+}
+.rotate-prompt p{font-size:18px;color:rgba(255,255,255,0.8);line-height:1.6}
+
+/* Portrait: show rotate prompt on mobile */
+@media (max-width:1024px) and (orientation:portrait){
+  .rotate-prompt{display:flex}
+  .stage{display:none}
+}
+
+.stage.prep{background:linear-gradient(135deg,#2a1f00,#0a0e1a)}
+.stage.count{background:linear-gradient(135deg,#2a0008,#0a0e1a)}
+.stage.work{background:linear-gradient(135deg,#001f12,#0a0e1a)}
+.stage.rest{background:linear-gradient(135deg,#001628,#0a0e1a)}
+.stage.done{background:linear-gradient(135deg,#0a0e1a,#001f12)}
+
+.stage::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+}
+
+/* ===== TOP BAR ===== */
+.top{
+  position:absolute;top:0;left:0;right:0;height:100px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 60px;
+  border-bottom:2px solid rgba(255,255,255,0.08);
+  background:rgba(0,0,0,0.3);
+  backdrop-filter:blur(10px);
+  z-index:10;
+}
+.round-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:56px;letter-spacing:4px;
+  display:flex;align-items:center;
+}
+.round-label .num{color:var(--accent);margin:0 8px}
+.round-dots{display:flex;gap:14px;margin-left:30px}
+.dot{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.25);
+  transition:all 0.4s;
+}
+.dot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 20px var(--accent)}
+.dot.done{background:rgba(255,255,255,0.35);border-color:rgba(255,255,255,0.35)}
+
+.total-time{
+  font-family:'JetBrains Mono',monospace;
+  font-size:38px;font-weight:800;
+  letter-spacing:2px;
+}
+.total-time .elapsed{color:var(--accent)}
+.total-time .sep{opacity:0.4;margin:0 10px}
+
+/* ===== MAIN ===== */
+.main{
+  position:absolute;top:100px;left:0;right:0;bottom:200px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 60px;gap:40px;
+}
+
+/* ===== LEFT PANEL: round structure ===== */
+.round-structure{
+  width:440px;
+  display:flex;flex-direction:column;gap:20px;
+}
+.struct-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:26px;letter-spacing:6px;
+  color:rgba(255,255,255,0.5);
+  margin-bottom:5px;
+}
+.step{
+  padding:26px 28px;
+  background:rgba(255,255,255,0.04);
+  border:2px solid rgba(255,255,255,0.08);
+  border-radius:18px;
+  display:flex;gap:20px;align-items:center;
+  transition:all 0.5s;
+  opacity:0.5;
+}
+.step.active{
+  background:rgba(0,255,136,0.12);
+  border-color:var(--accent);
+  box-shadow:0 0 30px rgba(0,255,136,0.3);
+  opacity:1;
+  transform:scale(1.03);
+}
+.step.done{
+  opacity:0.35;
+}
+.step.done .step-icon{background:rgba(255,255,255,0.2)}
+.step-icon{
+  width:60px;height:60px;border-radius:50%;
+  background:rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:36px;
+  flex-shrink:0;
+  transition:all 0.3s;
+}
+.step.active .step-icon{background:var(--accent);color:#000}
+.step.done .step-icon::after{content:'✓';font-size:32px}
+.step.done .step-icon > span{display:none}
+.step-content{flex:1;min-width:0}
+.step-title{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:38px;
+  line-height:1.1;
+  color:#fff;
+}
+.step-sub{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;
+  letter-spacing:3px;
+  color:var(--accent);
+  margin-top:4px;
+}
+.step.done .step-sub{color:rgba(255,255,255,0.4)}
+
+/* ===== CENTER TIMER ===== */
+.timer-wrap{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;
+}
+.state-label{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:48px;letter-spacing:10px;
+  color:rgba(255,255,255,0.8);
+  margin-bottom:20px;
+  transition:color 0.4s;
+}
+.stage.prep .state-label{color:var(--prep)}
+.stage.count .state-label{color:var(--count)}
+.stage.work .state-label{color:var(--work)}
+.stage.rest .state-label{color:var(--rest)}
+
+.timer-ring{
+  width:580px;height:580px;
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.timer-ring svg{
+  position:absolute;inset:0;
+  transform:rotate(-90deg);
+}
+.timer-ring svg .bg-ring{
+  fill:none;stroke:rgba(255,255,255,0.08);stroke-width:8;
+}
+.timer-ring svg .progress-ring{
+  fill:none;stroke:var(--accent);stroke-width:10;
+  stroke-linecap:round;
+  filter:drop-shadow(0 0 20px var(--accent));
+  transition:stroke-dashoffset 0.95s linear,stroke 0.5s;
+}
+.stage.prep .progress-ring{stroke:var(--prep);filter:drop-shadow(0 0 25px var(--prep))}
+.stage.count .progress-ring{stroke:var(--count);filter:drop-shadow(0 0 30px var(--count))}
+.stage.work .progress-ring{stroke:var(--work);filter:drop-shadow(0 0 25px var(--work))}
+.stage.rest .progress-ring{stroke:var(--rest);filter:drop-shadow(0 0 25px var(--rest))}
+
+.timer-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-weight:400;
+  font-size:240px;
+  line-height:1;
+  letter-spacing:0px;
+  color:#fff;
+  text-shadow:0 0 40px rgba(0,255,136,0.4);
+  position:relative;
+  z-index:2;
+}
+.timer-num.big{
+  font-size:320px;
+  color:var(--count);
+  text-shadow:0 0 60px var(--count);
+  animation:countBeat 1s ease-out;
+}
+@keyframes countBeat{
+  0%{transform:scale(1.4);opacity:0.3}
+  50%{transform:scale(1.1);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+.timer-sub{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:24px;letter-spacing:8px;
+  color:rgba(255,255,255,0.5);
+  margin-top:-10px;
+}
+
+/* ===== BOTTOM ===== */
+.bottom{
+  position:absolute;bottom:0;left:0;right:0;height:200px;
+  padding:30px 60px;
+  display:flex;flex-direction:column;justify-content:center;gap:24px;
+  background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
+  z-index:10;
+}
+.progress-bar{
+  height:14px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;
+  position:relative;
+}
+.progress-fill{
+  height:100%;
+  background:var(--accent);
+  width:0%;
+  border-radius:10px;
+  box-shadow:0 0 15px var(--accent);
+  transition:width 0.95s linear,background 0.5s;
+}
+.stage.prep .progress-fill{background:var(--prep);box-shadow:0 0 15px var(--prep)}
+.stage.count .progress-fill{background:var(--count);box-shadow:0 0 15px var(--count)}
+.stage.rest .progress-fill{background:var(--rest);box-shadow:0 0 15px var(--rest)}
+
+.caption{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:44px;font-weight:400;
+  text-align:center;
+  color:#fff;
+  min-height:56px;
+  letter-spacing:2px;
+  text-shadow:0 2px 15px rgba(0,0,0,0.8);
+  transition:opacity 0.3s;
+}
+
+/* ===== START SCREEN ===== */
+.start-screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0a0e1a,#001f12);
+  z-index:100;
+  gap:30px;
+}
+.start-title{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:140px;
+  color:#fff;
+  line-height:1;
+  letter-spacing:2px;
+}
+.start-title .accent{color:var(--accent);text-shadow:0 0 50px var(--accent)}
+.start-sub-en{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:56px;letter-spacing:12px;
+  color:var(--accent);
+  margin-top:-10px;
+}
+.start-sub{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:36px;color:rgba(255,255,255,0.7);
+  letter-spacing:4px;
+}
+.start-btn{
+  padding:26px 90px;
+  font-size:40px;font-weight:900;
+  background:var(--accent);color:#000;
+  border:none;border-radius:60px;
+  cursor:pointer;
+  letter-spacing:4px;
+  font-family:'Black Han Sans',sans-serif;
+  box-shadow:0 0 50px var(--accent);
+  transition:transform 0.2s;
+  margin-top:30px;
+}
+.start-btn:hover{transform:scale(1.05)}
+.start-info{display:flex;gap:50px;margin-top:20px}
+.start-info div{text-align:center;font-family:'Bebas Neue',sans-serif}
+.start-info .v{font-size:72px;font-weight:400;color:var(--accent);line-height:1}
+.start-info .k{font-size:22px;color:rgba(255,255,255,0.5);letter-spacing:4px;margin-top:5px}
+.start-tip{
+  color:rgba(255,255,255,0.4);font-size:20px;margin-top:10px;
+  font-family:'Noto Sans KR',sans-serif;
+}
+
+/* Voice selector */
+.voice-selector{
+  background:rgba(0,0,0,0.4);
+  border:2px solid rgba(0,255,136,0.3);
+  border-radius:20px;
+  padding:24px 32px;
+  margin-top:10px;
+  width:720px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.voice-label{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:26px;color:var(--accent);
+  letter-spacing:2px;
+}
+.voice-dropdown{
+  width:100%;
+  padding:14px 20px;
+  background:#1a1f2e;color:#fff;
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:10px;
+  font-size:18px;
+  font-family:'Noto Sans KR',sans-serif;
+  cursor:pointer;
+}
+.voice-dropdown:focus{outline:none;border-color:var(--accent)}
+.voice-controls{
+  display:flex;gap:20px;align-items:center;
+  flex-wrap:wrap;
+}
+.voice-controls label{
+  display:flex;align-items:center;gap:10px;
+  font-size:16px;color:rgba(255,255,255,0.8);
+  font-family:'Noto Sans KR',sans-serif;
+  flex:1;min-width:200px;
+}
+.voice-controls input[type=range]{
+  flex:1;accent-color:var(--accent);
+}
+.voice-controls span{
+  min-width:50px;text-align:right;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--accent);font-weight:700;
+}
+.voice-test{
+  padding:10px 20px;
+  background:transparent;
+  color:var(--accent);
+  border:2px solid var(--accent);
+  border-radius:10px;
+  font-family:'Black Han Sans',sans-serif;
+  font-size:18px;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.voice-test:hover{background:var(--accent);color:#000}
+
+/* ===== DONE SCREEN ===== */
+.done-screen{
+  position:absolute;inset:0;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  z-index:50;
+  background:radial-gradient(circle at center,rgba(0,255,136,0.2),transparent 60%);
+}
+.done-screen.show{display:flex;animation:fadeIn 1s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.done-screen h1{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:240px;letter-spacing:20px;
+  color:var(--accent);
+  text-shadow:0 0 80px var(--accent);
+  line-height:1;
+}
+.done-screen .ko-title{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:72px;color:#fff;margin-top:20px;letter-spacing:6px;
+}
+.done-screen p{
+  font-family:'Black Han Sans',sans-serif;
+  font-size:36px;color:rgba(255,255,255,0.7);margin-top:20px;letter-spacing:4px;
+}
+
+/* flash effect */
+.flash{
+  position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:200;
+}
+.flash.on{animation:flashAnim 0.4s ease-out}
+@keyframes flashAnim{
+  0%{opacity:0.7}
+  100%{opacity:0}
+}
+
+/* phase pill */
+.phase-pill{
+  position:absolute;top:125px;left:50%;transform:translateX(-50%);
+  display:flex;gap:10px;padding:8px 24px;
+  background:rgba(0,0,0,0.4);border-radius:30px;
+  border:1px solid rgba(255,255,255,0.15);
+  font-family:'Bebas Neue',sans-serif;
+  letter-spacing:5px;
+  font-size:22px;
+  color:rgba(255,255,255,0.9);
+  align-items:center;
+  z-index:10;
+}
+.phase-pill .dot-ind{
+  width:12px;height:12px;border-radius:50%;background:var(--accent);
+  animation:pulseLight 1.5s ease-in-out infinite;
+}
+@keyframes pulseLight{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.4;transform:scale(0.8)}
+}
+</style>
+</head>
+<body>
+<!-- Rotate prompt for portrait mobile -->
+<div class="rotate-prompt">
+  <div class="icon">📱</div>
+  <h2>가로 모드로 돌려주세요</h2>
+  <p>이 영상은 가로 화면으로 최적화되어 있어요.<br>
+  핸드폰을 옆으로 돌리고<br>
+  자동회전을 켜주세요.</p>
+</div>
+
+<div class="stage" id="stage">
+
+  <!-- START SCREEN -->
+  <div class="start-screen" id="startScreen">
+    <div class="start-title">오늘의 <span class="accent">WOD</span></div>
+    <div class="start-sub-en">WORKOUT OF THE DAY</div>
+    <div class="start-sub">2분 운동 · 1분 휴식 · 4라운드</div>
+    <div class="start-info">
+      <div><div class="v">4</div><div class="k">ROUNDS</div></div>
+      <div><div class="v">2:00</div><div class="k">WORK</div></div>
+      <div><div class="v">1:00</div><div class="k">REST</div></div>
+      <div><div class="v">~11</div><div class="k">MIN</div></div>
+    </div>
+
+    <!-- Voice selector -->
+    <div class="voice-selector">
+      <div class="voice-label">🎙️ AI 트레이너 음성 선택</div>
+      <select id="voiceSelect" class="voice-dropdown">
+        <option value="">로딩 중...</option>
+      </select>
+      <div class="voice-controls">
+        <label>속도
+          <input type="range" id="rateSlider" min="0.8" max="1.6" step="0.05" value="1.25">
+          <span id="rateVal">1.25x</span>
+        </label>
+        <label>톤
+          <input type="range" id="pitchSlider" min="0.5" max="1.5" step="0.05" value="0.85">
+          <span id="pitchVal">0.85</span>
+        </label>
+        <button class="voice-test" onclick="testVoice()">🔊 미리듣기</button>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startWorkout()">START ▶</button>
+    <div class="start-tip">화면 녹화 시작 후 START 버튼을 누르세요</div>
+  </div>
+
+  <!-- TOP -->
+  <div class="top">
+    <div style="display:flex;align-items:center">
+      <div class="round-label">ROUND <span class="num" id="roundNum">1</span> / 4</div>
+      <div class="round-dots" id="roundDots">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+    <div class="total-time">
+      <span class="elapsed" id="totalElapsed">00:00</span>
+      <span class="sep">/</span>
+      <span id="totalDuration">12:40</span>
+    </div>
+  </div>
+
+  <div class="phase-pill">
+    <span class="dot-ind"></span>
+    <span id="phaseText">READY</span>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Left: round structure -->
+    <div class="round-structure">
+      <div class="struct-label">ROUND STRUCTURE</div>
+      <div class="step" id="step1">
+        <div class="step-icon"><span>1</span></div>
+        <div class="step-content">
+          <div class="step-title" id="step1Title">줄넘기 80개</div>
+          <div class="step-sub">JUMP ROPE</div>
+        </div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-icon"><span>2</span></div>
+        <div class="step-content">
+          <div class="step-title" id="step2Title">남은 시간: 왕복달리기</div>
+          <div class="step-sub" id="step2Sub">SHUTTLE RUN</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center timer -->
+    <div class="timer-wrap">
+      <div class="state-label" id="stateLabel">PREPARE</div>
+      <div class="timer-ring">
+        <svg viewBox="0 0 580 580">
+          <circle class="bg-ring" cx="290" cy="290" r="278"/>
+          <circle class="progress-ring" id="progressRing" cx="290" cy="290" r="278"
+            stroke-dasharray="1746" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="timerNum">20</div>
+      </div>
+      <div class="timer-sub" id="timerSub">SECONDS</div>
+    </div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="bottom">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="caption" id="caption">준비해주세요</div>
+  </div>
+
+  <!-- DONE -->
+  <div class="done-screen" id="doneScreen">
+    <h1>WELL DONE!</h1>
+    <div class="ko-title">오늘의 WOD 완료</div>
+    <p>수고하셨습니다 💪</p>
+  </div>
+
+  <div class="flash" id="flash"></div>
+</div>
+
+<script>
+/* ========== RESPONSIVE SCALING ========== */
+function updateStageScale(){
+  const stage = document.getElementById('stage');
+  if(!stage) return;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const scale = Math.min(vw / 1920, vh / 1080);
+  stage.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', updateStageScale);
+window.addEventListener('orientationchange', () => {
+  setTimeout(updateStageScale, 200);
+});
+document.addEventListener('DOMContentLoaded', updateStageScale);
+// also run after page load for mobile Safari/Chrome
+window.addEventListener('load', updateStageScale);
+
+/* ========== CONFIG ========== */
+const rounds = [
+  {jumpRope:80, exercise:'왕복달리기', exerciseEn:'SHUTTLE RUN'},
+  {jumpRope:70, exercise:'런지',       exerciseEn:'LUNGES'},
+  {jumpRope:60, exercise:'팔굽혀펴기',   exerciseEn:'PUSH-UPS'},
+  {jumpRope:50, exercise:'브이싯 농구공 트위스트', exerciseEn:'V-SIT BALL TWIST'},
+];
+
+/* Full scenario with timing. TTS + display + beeps handled per-event. */
+/* Each round block:
+    Prep 20s  (20s intro speech + wait ~7s)
+    Count 10s (10,9,...1 spoken)
+    Work 120s (speech cues at 90, 60, 30s left; 5s countdown w/ beeps; "그만")
+    Rest 60s  ("X라운드 ... 기록해주세요")
+*/
+
+// Round 1: 20s prep + 120s work = 140s
+// Rounds 2-4: 60s rest (includes prep) + 120s work = 180s each (x3 = 540s)
+// Final record: 5s
+const TOTAL_DURATION = 140 + 540 + 5; // = 685s = 11:25
+document.getElementById('totalDuration').textContent = fmt(TOTAL_DURATION);
+
+/* ========== STATE ========== */
+let audioCtx = null;
+let totalSec = 0;
+let totalTimer = null;
+
+/* ========== AUDIO ========== */
+function initAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+}
+function beep(freq=880, dur=0.15, type='sine', vol=0.4){
+  if(!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + dur);
+}
+function longBeep(){ beep(1200, 0.6, 'sine', 0.5) }
+
+/* TTS */
+let selectedVoice = null;
+let userRate = 1.25;
+let userPitch = 0.85;
+let allKoVoices = [];
+
+function loadVoice(){
+  const voices = speechSynthesis.getVoices();
+  allKoVoices = voices.filter(v => v.lang.startsWith('ko'));
+
+  // If no Korean voices, fall back to all voices
+  const voicesToShow = allKoVoices.length > 0 ? allKoVoices : voices;
+
+  const select = document.getElementById('voiceSelect');
+  if(!select) return;
+
+  select.innerHTML = '';
+
+  if(voicesToShow.length === 0){
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '사용 가능한 음성 없음';
+    select.appendChild(opt);
+    return;
+  }
+
+  voicesToShow.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    // Show friendly name with gender hint
+    let label = v.name;
+    if(v.lang) label += ` (${v.lang})`;
+    // Try to detect gender from name
+    if(/female|woman|여|yuna|heami|seoyeon|sora/i.test(v.name)) label = '👩 ' + label;
+    else if(/male|man|남|jun|jin|minsu|sung/i.test(v.name)) label = '👨 ' + label;
+    else label = '🎙️ ' + label;
+    opt.textContent = label;
+    select.appendChild(opt);
+  });
+
+  // Default: pick a male voice if exists, else first
+  const defaultIdx = voicesToShow.findIndex(v => /male|man|남|jun|jin|minsu|sung/i.test(v.name));
+  select.selectedIndex = defaultIdx >= 0 ? defaultIdx : 0;
+  selectedVoice = voicesToShow[select.selectedIndex];
+
+  // Update on change
+  select.onchange = () => {
+    selectedVoice = voicesToShow[select.selectedIndex];
+  };
+}
+
+if('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = loadVoice;
+  loadVoice();
+  // Retry after delay (some browsers load voices async)
+  setTimeout(loadVoice, 500);
+  setTimeout(loadVoice, 1500);
+}
+
+// Slider listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const rateSlider = document.getElementById('rateSlider');
+  const pitchSlider = document.getElementById('pitchSlider');
+  const rateVal = document.getElementById('rateVal');
+  const pitchVal = document.getElementById('pitchVal');
+
+  if(rateSlider){
+    rateSlider.addEventListener('input', (e) => {
+      userRate = parseFloat(e.target.value);
+      rateVal.textContent = userRate.toFixed(2) + 'x';
+    });
+  }
+  if(pitchSlider){
+    pitchSlider.addEventListener('input', (e) => {
+      userPitch = parseFloat(e.target.value);
+      pitchVal.textContent = userPitch.toFixed(2);
+    });
+  }
+});
+
+function speak(text){
+  return new Promise(resolve => {
+    if(!('speechSynthesis' in window)){resolve();return}
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    if(selectedVoice) u.voice = selectedVoice;
+    // Normal speech: slightly less aggressive than fight
+    u.rate = Math.max(0.8, userRate - 0.15);
+    u.pitch = Math.min(1.5, userPitch + 0.15);
+    u.volume = 1.0;
+    u.onend = resolve;
+    u.onerror = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+// Trainer-style: user-selected rate/pitch
+function speakFight(text){
+  return new Promise(resolve => {
+    if(!('speechSynthesis' in window)){resolve();return}
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ko-KR';
+    if(selectedVoice) u.voice = selectedVoice;
+    u.rate = userRate;
+    u.pitch = userPitch;
+    u.volume = 1.0;
+    u.onend = resolve;
+    u.onerror = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+
+// Test voice preview
+function testVoice(){
+  // Unlock on user gesture
+  try{ speechSynthesis.resume() }catch(e){}
+  speakFight('좋아요! 파이팅! 끝까지 밀어붙여봅시다!');
+}
+window.testVoice = testVoice;
+
+/* ========== UTILS ========== */
+function fmt(s){
+  const m = Math.floor(s/60), r = s%60;
+  return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function setStage(cls){
+  document.getElementById('stage').className = 'stage ' + cls;
+}
+function setPhase(txt){ document.getElementById('phaseText').textContent = txt }
+function setState(txt){ document.getElementById('stateLabel').textContent = txt }
+function setTimer(n, big=false){
+  const t = document.getElementById('timerNum');
+  t.textContent = n;
+  t.className = 'timer-num' + (big ? ' big' : '');
+}
+function setTimerSub(txt){ document.getElementById('timerSub').textContent = txt }
+function setCaption(txt){ document.getElementById('caption').textContent = txt }
+function setProgress(pct, ringTotal){
+  document.getElementById('progressFill').style.width = pct + '%';
+  const ring = document.getElementById('progressRing');
+  const dash = 1746;
+  ring.style.strokeDashoffset = dash * (pct/100);
+}
+
+function updateRoundUI(roundIdx){
+  document.getElementById('roundNum').textContent = roundIdx + 1;
+  const dots = document.querySelectorAll('#roundDots .dot');
+  dots.forEach((d,i) => {
+    d.classList.remove('active','done');
+    if(i < roundIdx) d.classList.add('done');
+    else if(i === roundIdx) d.classList.add('active');
+  });
+  const r = rounds[roundIdx];
+  document.getElementById('step1Title').textContent = `줄넘기 ${r.jumpRope}개`;
+  document.getElementById('step2Title').textContent = `남은 시간: ${r.exercise}`;
+  document.getElementById('step2Sub').textContent = r.exerciseEn;
+  setStep(0); // reset
+}
+function setStep(active){
+  // active: 0 = none yet, 1 = jump rope, 2 = main exercise
+  const s1 = document.getElementById('step1');
+  const s2 = document.getElementById('step2');
+  s1.classList.remove('active','done');
+  s2.classList.remove('active','done');
+  if(active === 1){ s1.classList.add('active') }
+  else if(active === 2){ s1.classList.add('done'); s2.classList.add('active') }
+}
+
+function startTotalTimer(){
+  totalSec = 0;
+  document.getElementById('totalElapsed').textContent = '00:00';
+  totalTimer = setInterval(() => {
+    totalSec++;
+    document.getElementById('totalElapsed').textContent = fmt(totalSec);
+  }, 1000);
+}
+function stopTotalTimer(){ clearInterval(totalTimer) }
+
+function flash(){
+  const f = document.getElementById('flash');
+  f.classList.remove('on');
+  void f.offsetWidth;
+  f.classList.add('on');
+}
+
+/* ========== COUNTDOWN (10 ~ 1) ========== */
+async function countdown10(){
+  setStage('count');
+  setPhase('COUNTDOWN');
+  setState('GET READY');
+  setTimerSub('COUNTDOWN');
+  // "10 9 8 7 6 5 4 3 2 1" spoken as "십, 구, 팔 ..."
+  const words = ['10','9','8','7','6','5','4','3','2','1'];
+  const koWords = ['십','구','팔','칠','육','오','사','삼','이','일'];
+  for(let i = 0; i < 10; i++){
+    setTimer(words[i], true);
+    setCaption(koWords[i]);
+    setProgress(((i+1)/10)*100);
+    // beep on 3,2,1
+    if(i >= 7){ beep(1000, 0.15, 'square', 0.5) }
+    else { beep(660, 0.08, 'sine', 0.25) }
+    // speak in parallel (short)
+    speak(koWords[i]);
+    await sleep(1000);
+  }
+}
+
+/* ========== 5s FINAL COUNTDOWN ========== */
+async function countdown5(){
+  const nums = ['5','4','3','2','1'];
+  const ko = ['오','사','삼','이','일'];
+  for(let i = 0; i < 5; i++){
+    setTimer(nums[i], true);
+    setCaption(ko[i]);
+    if(i >= 2){ beep(1200, 0.15, 'square', 0.55) }
+    else { beep(800, 0.1, 'sine', 0.3) }
+    speakFight(ko[i]);
+    await sleep(1000);
+  }
+  setTimer('0', true);
+  setCaption('그만!');
+  longBeep();
+  flash();
+  await speakFight('그만!');
+  await sleep(800);
+}
+
+/* ========== COUNT DOWN TIMER (seconds) ========== */
+async function runTimer(seconds, {onTick, checkpoints={}}={}){
+  for(let s = seconds; s >= 1; s--){
+    setTimer(fmt(s));
+    setProgress(((seconds-s)/seconds)*100);
+    if(onTick) onTick(s);
+    if(checkpoints[s]){ await checkpoints[s](); }
+    await sleep(1000);
+  }
+  setTimer('00:00');
+}
+
+/* ========== PREP (20s total, last 10s = countdown) ========== */
+async function prepPhase(roundIdx){
+  const r = rounds[roundIdx];
+  setStage('prep');
+  setPhase('PREPARE');
+  setState('PREPARE');
+  setTimerSub('SECONDS');
+  updateRoundUI(roundIdx);
+  setStep(0);
+
+  // Announce full intro during first 10 seconds
+  const intro = `20초 후에 운동을 시작합니다. ${roundIdx+1}라운드에는 줄넘기 ${r.jumpRope}개를 실시합니다. 줄넘기를 들고 준비해주세요. 줄넘기 후에는 ${r.exercise}를 실시합니다.`;
+  setCaption(`${roundIdx+1}라운드 준비`);
+  speak(intro);
+
+  // First 10 seconds: intro/prep (20 -> 11)
+  for(let s = 20; s >= 11; s--){
+    setTimer(s);
+    setProgress(((20-s)/20)*100);
+    if(s === 17) setCaption('줄넘기를 준비해주세요');
+    if(s === 13) setCaption(`줄넘기 후에는 ${r.exercise}`);
+    await sleep(1000);
+  }
+
+  // Cancel any remaining intro speech before countdown
+  speechSynthesis.cancel();
+
+  // Last 10 seconds: countdown with beeps (10 -> 1)
+  setStage('count');
+  setPhase('COUNTDOWN');
+  setState('GET READY');
+  setTimerSub('COUNTDOWN');
+  const koWords = ['십','구','팔','칠','육','오','사','삼','이','일'];
+  for(let s = 10; s >= 1; s--){
+    setTimer(s, true);
+    setCaption(koWords[10-s]);
+    setProgress(((20-s)/20)*100);
+    // beep on 3,2,1
+    if(s <= 3){ beep(1000, 0.15, 'square', 0.5) }
+    else { beep(660, 0.08, 'sine', 0.25) }
+    speak(koWords[10-s]);
+    await sleep(1000);
+  }
+}
+
+/* ========== WORK PHASE (2:00) ========== */
+async function workPhase(roundIdx){
+  const r = rounds[roundIdx];
+  setStage('work');
+  setPhase('WORK');
+  setState('WORK');
+  setTimerSub('ROUND TIMER');
+  setStep(1); // jump rope active
+  setCaption('줄넘기 시작!');
+  await speakFight('줄넘기 시작! 가자!');
+  beep(1200, 0.4, 'sine', 0.5);
+
+  // 120 -> 1 countdown
+  let announcedSwitch = false;
+  for(let s = 120; s >= 6; s--){
+    setTimer(fmt(s));
+    setProgress(((120-s)/120)*100);
+
+    const skipTime = Math.round(r.jumpRope * 0.75);
+    const switchAt = 120 - skipTime;
+    if(!announcedSwitch && s <= switchAt){
+      setStep(2);
+      setCaption(`남은 시간: ${r.exercise}!`);
+      speakFight(`${r.exercise} 시작! 파이팅!`);
+      announcedSwitch = true;
+    }
+
+    // checkpoints - trainer style
+    if(s === 90){ speakFight('1분 30초 남았습니다. 계속 갑시다!'); setCaption('1분 30초 남았습니다') }
+    if(s === 60){ speakFight('1분 남았습니다. 힘내세요!'); setCaption('1분 남았습니다') }
+    if(s === 30){ speakFight('30초! 끝까지 밀어붙이세요!'); setCaption('30초 남았습니다') }
+    if(s === 10){ setCaption('마지막 10초!') }
+
+    await sleep(1000);
+  }
+  // final 5-1 + 그만
+  await countdown5();
+  setStep(0);
+}
+
+/* ========== REST PHASE (1:00 total - last 20s = prep for next round) ========== */
+async function restPhase(roundIdx){
+  const r = rounds[roundIdx];
+  const nextR = rounds[roundIdx+1];
+  setStage('rest');
+  setPhase('REST');
+  setState('REST');
+  setTimerSub('RECORD YOUR REPS');
+
+  const msg = `${roundIdx+1}라운드 ${r.exercise} 갯수를 기록해주세요.`;
+  setCaption(msg);
+  speak(msg);
+
+  // First 40 seconds: rest + record (60 -> 21)
+  for(let s = 60; s >= 21; s--){
+    setTimer(fmt(s));
+    setProgress(((60-s)/60)*100);
+    if(s === 50) setCaption(`${roundIdx+1}R ${r.exercise} 갯수 기록`);
+    if(s === 35) setCaption('잠시 휴식하세요');
+    if(s === 25) setCaption('곧 다음 라운드 준비');
+    await sleep(1000);
+  }
+
+  // Last 20 seconds: prep for next round (stays in rest phase UI but switches to prep mode)
+  setStage('prep');
+  setPhase('NEXT UP');
+  setState('GET READY');
+  setTimerSub('NEXT ROUND');
+  updateRoundUI(roundIdx+1);
+  setStep(0);
+
+  const intro = `${roundIdx+2}라운드 시작합니다! 줄넘기 ${nextR.jumpRope}개, 그리고 ${nextR.exercise}! 준비하세요, 파이팅!`;
+  setCaption(`${roundIdx+2}라운드 준비!`);
+  speakFight(intro);
+
+  // 20 -> 11 (intro speech time)
+  for(let s = 20; s >= 11; s--){
+    setTimer(s);
+    setProgress(((60-s)/60)*100);
+    if(s === 17) setCaption('줄넘기 들고 준비!');
+    if(s === 13) setCaption(`줄넘기 후 ${nextR.exercise}!`);
+    await sleep(1000);
+  }
+
+  // Cancel remaining intro, start countdown
+  speechSynthesis.cancel();
+
+  // 10 -> 1 countdown with beeps
+  setStage('count');
+  setPhase('COUNTDOWN');
+  setState('GET READY');
+  setTimerSub('COUNTDOWN');
+  const koWords = ['십','구','팔','칠','육','오','사','삼','이','일'];
+  for(let s = 10; s >= 1; s--){
+    setTimer(s, true);
+    setCaption(koWords[10-s]);
+    setProgress(((60-s)/60)*100);
+    if(s <= 3){ beep(1000, 0.15, 'square', 0.5) }
+    else { beep(660, 0.08, 'sine', 0.25) }
+    speakFight(koWords[10-s]);
+    await sleep(1000);
+  }
+}
+
+/* ========== MAIN LOOP ========== */
+async function startWorkout(){
+  initAudio();
+  // iOS TTS unlock - need a silent utterance first on user gesture
+  try{
+    speechSynthesis.resume();
+    const silent = new SpeechSynthesisUtterance(' ');
+    silent.volume = 0;
+    speechSynthesis.speak(silent);
+  }catch(e){}
+  // Ensure audio context is running (iOS)
+  if(audioCtx && audioCtx.state === 'suspended'){
+    try{ await audioCtx.resume() }catch(e){}
+  }
+  document.getElementById('startScreen').style.display = 'none';
+  updateStageScale();
+
+  startTotalTimer();
+
+  for(let i = 0; i < rounds.length; i++){
+    // Only first round needs separate prep; subsequent rounds' prep is included in previous rest
+    if(i === 0){
+      await prepPhase(i);
+    }
+    await workPhase(i);
+    if(i < rounds.length - 1){
+      await restPhase(i);  // includes prep for next round
+    } else {
+      // Final round: still announce recording
+      const r = rounds[i];
+      const msg = `${i+1}라운드 ${r.exercise} 갯수를 기록해주세요.`;
+      setStage('rest');
+      setPhase('RECORD');
+      setState('RECORD');
+      setTimerSub('FINAL ROUND');
+      setCaption(msg);
+      await speak(msg);
+      await sleep(3000);
+    }
+  }
+
+  // DONE
+  stopTotalTimer();
+  setStage('done');
+  document.getElementById('doneScreen').classList.add('show');
+  flash();
+  longBeep();
+  await sleep(500);
+  longBeep();
+  await speak('오늘의 운동을 모두 완료했습니다. 수고하셨습니다.');
+}
+
+// expose
+window.startWorkout = startWorkout;
+</script>
+</body>
+</html>
