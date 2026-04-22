@@ -943,68 +943,63 @@ async function startWorkout(){
   enableMusic = document.getElementById('musicCheck').checked;
   enableBeep  = document.getElementById('beepCheck').checked;
 
-  initAudio();
-  preloadVoices();
+  // ========== TRANSITION SCREEN FIRST ==========
+  // Do this BEFORE any audio operations that might fail
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('audioControls').style.display = 'flex';
+  updateStageScale();
 
-  // ========== MOBILE AUDIO UNLOCK (CRITICAL) ==========
-  // iOS and some Android browsers require audio to be started from a user gesture.
-  // We play a silent buffer on EVERY audio element to unlock them all at once.
+  // Initialize audio (won't throw)
+  try{ initAudio() }catch(e){ console.log('initAudio error:', e) }
+  try{ preloadVoices() }catch(e){ console.log('preloadVoices error:', e) }
+
+  // ========== MOBILE AUDIO UNLOCK ==========
   try{
     if(audioCtx && audioCtx.state === 'suspended'){
       await audioCtx.resume();
     }
-  }catch(e){}
+  }catch(e){ console.log('audioCtx resume error:', e) }
 
-  // Unlock all voice audio elements with silent play
-  const unlockPromises = [];
+  // Unlock audio elements (wrapped in try-catch, won't block)
   for(const key in voiceAudio){
-    const a = voiceAudio[key];
     try{
+      const a = voiceAudio[key];
       a.muted = true;
       const p = a.play();
       if(p && p.then){
-        unlockPromises.push(
-          p.then(() => {
-            a.pause();
-            a.currentTime = 0;
-            a.muted = false;
-          }).catch(() => { a.muted = false; })
-        );
+        p.then(() => {
+          try{ a.pause(); a.currentTime = 0; a.muted = false; }catch(e){}
+        }).catch(() => {
+          try{ a.muted = false; }catch(e){}
+        });
       }
     }catch(e){}
   }
-  // Unlock bg music too
+
   if(bgMusic){
     try{
       bgMusic.muted = true;
       const p = bgMusic.play();
       if(p && p.then){
-        unlockPromises.push(
-          p.then(() => {
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
-            bgMusic.muted = false;
-          }).catch(() => { bgMusic.muted = false; })
-        );
+        p.then(() => {
+          try{ bgMusic.pause(); bgMusic.currentTime = 0; bgMusic.muted = false; }catch(e){}
+        }).catch(() => {
+          try{ bgMusic.muted = false; }catch(e){}
+        });
       }
     }catch(e){}
   }
-  await Promise.all(unlockPromises).catch(()=>{});
 
-  // Small delay to let everything settle
-  await sleep(100);
+  // Small delay to let unlock promises settle
+  await sleep(300);
 
   // Start background music playlist
   if(enableMusic){
-    startPlaylist();
+    try{ startPlaylist() }catch(e){ console.log('startPlaylist error:', e) }
   }
 
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('audioControls').style.display = 'flex';
-  updateStageScale();
-
   // Keep screen awake on mobile
-  requestWakeLock();
+  try{ requestWakeLock() }catch(e){}
 
   // Initial prep (not counted in 11:00)
   await prepPhase(0);
