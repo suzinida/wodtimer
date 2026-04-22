@@ -16,6 +16,7 @@
   --count:#ff2d55;
   --work:#00ff88;
   --rest:#00b4ff;
+  --urgent:#ff2d55;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:'Noto Sans KR',sans-serif;position:fixed}
@@ -31,17 +32,14 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
   flex-shrink:0;
 }
 
-/* Rotation prompt for portrait mode */
 .rotate-prompt{
   display:none;
   position:fixed;inset:0;
-  background:#0a0e1a;
-  z-index:9999;
+  background:#0a0e1a;z-index:9999;
   flex-direction:column;align-items:center;justify-content:center;
   color:#fff;text-align:center;padding:40px;
   font-family:'Noto Sans KR',sans-serif;
 }
-.rotate-prompt.show{display:flex}
 .rotate-prompt .icon{
   font-size:100px;margin-bottom:30px;
   animation:rotateHint 2s ease-in-out infinite;
@@ -55,8 +53,6 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
   font-size:36px;color:#00ff88;margin-bottom:15px;
 }
 .rotate-prompt p{font-size:18px;color:rgba(255,255,255,0.8);line-height:1.6}
-
-/* Portrait: show rotate prompt on mobile */
 @media (max-width:1024px) and (orientation:portrait){
   .rotate-prompt{display:flex}
   .stage{display:none}
@@ -65,6 +61,7 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 .stage.prep{background:linear-gradient(135deg,#2a1f00,#0a0e1a)}
 .stage.count{background:linear-gradient(135deg,#2a0008,#0a0e1a)}
 .stage.work{background:linear-gradient(135deg,#001f12,#0a0e1a)}
+.stage.work.urgent{background:linear-gradient(135deg,#2a0008,#0a0e1a)}
 .stage.rest{background:linear-gradient(135deg,#001628,#0a0e1a)}
 .stage.done{background:linear-gradient(135deg,#0a0e1a,#001f12)}
 
@@ -73,15 +70,15 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
   background-image:
     linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
     linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
-  background-size:60px 60px;
+  background-size:80px 80px;
   pointer-events:none;
 }
 
 /* ===== TOP BAR ===== */
 .top{
-  position:absolute;top:0;left:0;right:0;height:100px;
+  position:absolute;top:0;left:0;right:0;height:110px;
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 60px;
+  padding:0 70px;
   border-bottom:2px solid rgba(255,255,255,0.08);
   background:rgba(0,0,0,0.3);
   backdrop-filter:blur(10px);
@@ -89,94 +86,112 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 }
 .round-label{
   font-family:'Bebas Neue',sans-serif;
-  font-size:56px;letter-spacing:4px;
-  display:flex;align-items:center;
+  font-size:68px;letter-spacing:5px;
+  display:flex;align-items:center;line-height:1;
 }
-.round-label .num{color:var(--accent);margin:0 8px}
-.round-dots{display:flex;gap:14px;margin-left:30px}
+.round-label .num{color:var(--accent);margin:0 12px}
+.round-dots{display:flex;gap:18px;margin-left:36px}
 .dot{
-  width:22px;height:22px;border-radius:50%;
-  border:2px solid rgba(255,255,255,0.25);
+  width:26px;height:26px;border-radius:50%;
+  border:3px solid rgba(255,255,255,0.25);
   transition:all 0.4s;
 }
-.dot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 20px var(--accent)}
+.dot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 25px var(--accent)}
 .dot.done{background:rgba(255,255,255,0.35);border-color:rgba(255,255,255,0.35)}
 
 .total-time{
   font-family:'JetBrains Mono',monospace;
-  font-size:38px;font-weight:800;
+  font-size:46px;font-weight:800;
   letter-spacing:2px;
 }
 .total-time .elapsed{color:var(--accent)}
-.total-time .sep{opacity:0.4;margin:0 10px}
+.total-time .sep{opacity:0.4;margin:0 12px}
+
+/* ===== AUDIO CONTROLS (top right) ===== */
+.audio-controls{
+  position:absolute;top:130px;right:30px;
+  display:flex;gap:12px;
+  z-index:20;
+}
+.audio-btn{
+  width:60px;height:60px;border-radius:50%;
+  background:rgba(0,0,0,0.5);
+  border:2px solid rgba(255,255,255,0.2);
+  color:#fff;
+  font-size:28px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(10px);
+  transition:all 0.2s;
+}
+.audio-btn:hover{background:rgba(0,255,136,0.3);border-color:var(--accent)}
+.audio-btn.muted{opacity:0.5}
 
 /* ===== MAIN ===== */
 .main{
-  position:absolute;top:100px;left:0;right:0;bottom:200px;
+  position:absolute;top:110px;left:0;right:0;bottom:0;
   display:flex;align-items:center;justify-content:center;
-  padding:0 60px;gap:40px;
+  padding:30px 60px;gap:50px;
 }
 
-/* ===== LEFT PANEL: round structure ===== */
 .round-structure{
-  width:440px;
-  display:flex;flex-direction:column;gap:20px;
+  width:620px;
+  display:flex;flex-direction:column;gap:28px;
 }
 .struct-label{
   font-family:'Bebas Neue',sans-serif;
-  font-size:26px;letter-spacing:6px;
+  font-size:36px;letter-spacing:8px;
   color:rgba(255,255,255,0.5);
-  margin-bottom:5px;
+  margin-bottom:8px;
 }
 .step{
-  padding:26px 28px;
-  background:rgba(255,255,255,0.04);
-  border:2px solid rgba(255,255,255,0.08);
-  border-radius:18px;
-  display:flex;gap:20px;align-items:center;
+  padding:36px 40px;
+  background:rgba(0,255,136,0.08);
+  border:3px solid rgba(0,255,136,0.4);
+  border-radius:24px;
+  display:flex;gap:28px;align-items:center;
   transition:all 0.5s;
-  opacity:0.5;
+  box-shadow:0 0 30px rgba(0,255,136,0.15);
 }
-.step.active{
-  background:rgba(0,255,136,0.12);
-  border-color:var(--accent);
-  box-shadow:0 0 30px rgba(0,255,136,0.3);
-  opacity:1;
-  transform:scale(1.03);
+.step.dim{
+  background:rgba(255,255,255,0.03);
+  border-color:rgba(255,255,255,0.1);
+  box-shadow:none;
+  opacity:0.4;
 }
-.step.done{
-  opacity:0.35;
-}
-.step.done .step-icon{background:rgba(255,255,255,0.2)}
 .step-icon{
-  width:60px;height:60px;border-radius:50%;
-  background:rgba(255,255,255,0.1);
+  width:90px;height:90px;border-radius:50%;
+  background:var(--accent);
+  color:#000;
   display:flex;align-items:center;justify-content:center;
   font-family:'Bebas Neue',sans-serif;
-  font-size:36px;
+  font-size:54px;
   flex-shrink:0;
   transition:all 0.3s;
+  line-height:1;
 }
-.step.active .step-icon{background:var(--accent);color:#000}
-.step.done .step-icon::after{content:'✓';font-size:32px}
-.step.done .step-icon > span{display:none}
+.step.dim .step-icon{background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.5)}
 .step-content{flex:1;min-width:0}
 .step-title{
   font-family:'Black Han Sans',sans-serif;
-  font-size:38px;
-  line-height:1.1;
+  font-size:56px;
+  line-height:1.05;
   color:#fff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
+.step-title.smaller{font-size:42px}
+.step-title.smallest{font-size:34px}
 .step-sub{
   font-family:'Bebas Neue',sans-serif;
-  font-size:20px;
-  letter-spacing:3px;
+  font-size:28px;
+  letter-spacing:4px;
   color:var(--accent);
-  margin-top:4px;
+  margin-top:6px;
 }
-.step.done .step-sub{color:rgba(255,255,255,0.4)}
+.step.dim .step-sub{color:rgba(255,255,255,0.4)}
 
-/* ===== CENTER TIMER ===== */
 .timer-wrap{
   flex:1;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -184,18 +199,20 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 }
 .state-label{
   font-family:'Bebas Neue',sans-serif;
-  font-size:48px;letter-spacing:10px;
-  color:rgba(255,255,255,0.8);
+  font-size:68px;letter-spacing:14px;
+  color:rgba(255,255,255,0.85);
   margin-bottom:20px;
+  line-height:1;
   transition:color 0.4s;
 }
 .stage.prep .state-label{color:var(--prep)}
 .stage.count .state-label{color:var(--count)}
 .stage.work .state-label{color:var(--work)}
+.stage.work.urgent .state-label{color:var(--urgent)}
 .stage.rest .state-label{color:var(--rest)}
 
 .timer-ring{
-  width:580px;height:580px;
+  width:760px;height:760px;
   position:relative;
   display:flex;align-items:center;justify-content:center;
 }
@@ -204,34 +221,36 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
   transform:rotate(-90deg);
 }
 .timer-ring svg .bg-ring{
-  fill:none;stroke:rgba(255,255,255,0.08);stroke-width:8;
+  fill:none;stroke:rgba(255,255,255,0.08);stroke-width:10;
 }
 .timer-ring svg .progress-ring{
-  fill:none;stroke:var(--accent);stroke-width:10;
+  fill:none;stroke:var(--accent);stroke-width:12;
   stroke-linecap:round;
-  filter:drop-shadow(0 0 20px var(--accent));
+  filter:drop-shadow(0 0 25px var(--accent));
   transition:stroke-dashoffset 0.95s linear,stroke 0.5s;
 }
 .stage.prep .progress-ring{stroke:var(--prep);filter:drop-shadow(0 0 25px var(--prep))}
 .stage.count .progress-ring{stroke:var(--count);filter:drop-shadow(0 0 30px var(--count))}
 .stage.work .progress-ring{stroke:var(--work);filter:drop-shadow(0 0 25px var(--work))}
+.stage.work.urgent .progress-ring{stroke:var(--urgent);filter:drop-shadow(0 0 30px var(--urgent))}
 .stage.rest .progress-ring{stroke:var(--rest);filter:drop-shadow(0 0 25px var(--rest))}
 
 .timer-num{
   font-family:'Bebas Neue',sans-serif;
   font-weight:400;
-  font-size:240px;
+  font-size:340px;
   line-height:1;
   letter-spacing:0px;
   color:#fff;
-  text-shadow:0 0 40px rgba(0,255,136,0.4);
+  text-shadow:0 0 50px rgba(0,255,136,0.4);
   position:relative;
   z-index:2;
 }
+.stage.work.urgent .timer-num{color:var(--urgent);text-shadow:0 0 60px var(--urgent)}
 .timer-num.big{
-  font-size:320px;
+  font-size:420px;
   color:var(--count);
-  text-shadow:0 0 60px var(--count);
+  text-shadow:0 0 70px var(--count);
   animation:countBeat 1s ease-out;
 }
 @keyframes countBeat{
@@ -241,47 +260,11 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 }
 .timer-sub{
   font-family:'Bebas Neue',sans-serif;
-  font-size:24px;letter-spacing:8px;
+  font-size:32px;letter-spacing:10px;
   color:rgba(255,255,255,0.5);
   margin-top:-10px;
 }
 
-/* ===== BOTTOM ===== */
-.bottom{
-  position:absolute;bottom:0;left:0;right:0;height:200px;
-  padding:30px 60px;
-  display:flex;flex-direction:column;justify-content:center;gap:24px;
-  background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
-  z-index:10;
-}
-.progress-bar{
-  height:14px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;
-  position:relative;
-}
-.progress-fill{
-  height:100%;
-  background:var(--accent);
-  width:0%;
-  border-radius:10px;
-  box-shadow:0 0 15px var(--accent);
-  transition:width 0.95s linear,background 0.5s;
-}
-.stage.prep .progress-fill{background:var(--prep);box-shadow:0 0 15px var(--prep)}
-.stage.count .progress-fill{background:var(--count);box-shadow:0 0 15px var(--count)}
-.stage.rest .progress-fill{background:var(--rest);box-shadow:0 0 15px var(--rest)}
-
-.caption{
-  font-family:'Black Han Sans',sans-serif;
-  font-size:44px;font-weight:400;
-  text-align:center;
-  color:#fff;
-  min-height:56px;
-  letter-spacing:2px;
-  text-shadow:0 2px 15px rgba(0,0,0,0.8);
-  transition:opacity 0.3s;
-}
-
-/* ===== START SCREEN ===== */
 .start-screen{
   position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -291,7 +274,7 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 }
 .start-title{
   font-family:'Black Han Sans',sans-serif;
-  font-size:140px;
+  font-size:160px;
   color:#fff;
   line-height:1;
   letter-spacing:2px;
@@ -299,18 +282,18 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 .start-title .accent{color:var(--accent);text-shadow:0 0 50px var(--accent)}
 .start-sub-en{
   font-family:'Bebas Neue',sans-serif;
-  font-size:56px;letter-spacing:12px;
+  font-size:60px;letter-spacing:14px;
   color:var(--accent);
   margin-top:-10px;
 }
 .start-sub{
   font-family:'Black Han Sans',sans-serif;
-  font-size:36px;color:rgba(255,255,255,0.7);
+  font-size:40px;color:rgba(255,255,255,0.7);
   letter-spacing:4px;
 }
 .start-btn{
-  padding:26px 90px;
-  font-size:40px;font-weight:900;
+  padding:30px 100px;
+  font-size:44px;font-weight:900;
   background:var(--accent);color:#000;
   border:none;border-radius:60px;
   cursor:pointer;
@@ -318,77 +301,33 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
   font-family:'Black Han Sans',sans-serif;
   box-shadow:0 0 50px var(--accent);
   transition:transform 0.2s;
-  margin-top:30px;
+  margin-top:40px;
 }
 .start-btn:hover{transform:scale(1.05)}
-.start-info{display:flex;gap:50px;margin-top:20px}
+.start-info{display:flex;gap:60px;margin-top:20px}
 .start-info div{text-align:center;font-family:'Bebas Neue',sans-serif}
-.start-info .v{font-size:72px;font-weight:400;color:var(--accent);line-height:1}
-.start-info .k{font-size:22px;color:rgba(255,255,255,0.5);letter-spacing:4px;margin-top:5px}
-.start-tip{
-  color:rgba(255,255,255,0.4);font-size:20px;margin-top:10px;
-  font-family:'Noto Sans KR',sans-serif;
-}
+.start-info .v{font-size:84px;font-weight:400;color:var(--accent);line-height:1}
+.start-info .k{font-size:24px;color:rgba(255,255,255,0.5);letter-spacing:4px;margin-top:5px}
 
-/* Voice selector */
-.voice-selector{
-  background:rgba(0,0,0,0.4);
-  border:2px solid rgba(0,255,136,0.3);
-  border-radius:20px;
-  padding:24px 32px;
-  margin-top:10px;
-  width:720px;
-  display:flex;flex-direction:column;gap:16px;
-}
-.voice-label{
-  font-family:'Black Han Sans',sans-serif;
-  font-size:26px;color:var(--accent);
-  letter-spacing:2px;
-}
-.voice-dropdown{
-  width:100%;
-  padding:14px 20px;
-  background:#1a1f2e;color:#fff;
-  border:1px solid rgba(255,255,255,0.2);
-  border-radius:10px;
-  font-size:18px;
+.start-options{
+  display:flex;gap:30px;margin-top:10px;
   font-family:'Noto Sans KR',sans-serif;
+}
+.start-options label{
+  display:flex;align-items:center;gap:12px;
+  font-size:22px;color:rgba(255,255,255,0.8);
   cursor:pointer;
-}
-.voice-dropdown:focus{outline:none;border-color:var(--accent)}
-.voice-controls{
-  display:flex;gap:20px;align-items:center;
-  flex-wrap:wrap;
-}
-.voice-controls label{
-  display:flex;align-items:center;gap:10px;
-  font-size:16px;color:rgba(255,255,255,0.8);
-  font-family:'Noto Sans KR',sans-serif;
-  flex:1;min-width:200px;
-}
-.voice-controls input[type=range]{
-  flex:1;accent-color:var(--accent);
-}
-.voice-controls span{
-  min-width:50px;text-align:right;
-  font-family:'JetBrains Mono',monospace;
-  color:var(--accent);font-weight:700;
-}
-.voice-test{
-  padding:10px 20px;
-  background:transparent;
-  color:var(--accent);
-  border:2px solid var(--accent);
-  border-radius:10px;
-  font-family:'Black Han Sans',sans-serif;
-  font-size:18px;
-  letter-spacing:2px;
-  cursor:pointer;
+  padding:12px 24px;
+  background:rgba(0,0,0,0.3);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.1);
   transition:all 0.2s;
 }
-.voice-test:hover{background:var(--accent);color:#000}
+.start-options label:hover{border-color:var(--accent);color:#fff}
+.start-options input[type=checkbox]{
+  width:22px;height:22px;accent-color:var(--accent);cursor:pointer;
+}
 
-/* ===== DONE SCREEN ===== */
 .done-screen{
   position:absolute;inset:0;
   display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -399,21 +338,20 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .done-screen h1{
   font-family:'Bebas Neue',sans-serif;
-  font-size:240px;letter-spacing:20px;
+  font-size:260px;letter-spacing:22px;
   color:var(--accent);
   text-shadow:0 0 80px var(--accent);
   line-height:1;
 }
 .done-screen .ko-title{
   font-family:'Black Han Sans',sans-serif;
-  font-size:72px;color:#fff;margin-top:20px;letter-spacing:6px;
+  font-size:80px;color:#fff;margin-top:20px;letter-spacing:6px;
 }
 .done-screen p{
   font-family:'Black Han Sans',sans-serif;
-  font-size:36px;color:rgba(255,255,255,0.7);margin-top:20px;letter-spacing:4px;
+  font-size:40px;color:rgba(255,255,255,0.7);margin-top:20px;letter-spacing:4px;
 }
 
-/* flash effect */
 .flash{
   position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:200;
 }
@@ -422,32 +360,9 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
   0%{opacity:0.7}
   100%{opacity:0}
 }
-
-/* phase pill */
-.phase-pill{
-  position:absolute;top:125px;left:50%;transform:translateX(-50%);
-  display:flex;gap:10px;padding:8px 24px;
-  background:rgba(0,0,0,0.4);border-radius:30px;
-  border:1px solid rgba(255,255,255,0.15);
-  font-family:'Bebas Neue',sans-serif;
-  letter-spacing:5px;
-  font-size:22px;
-  color:rgba(255,255,255,0.9);
-  align-items:center;
-  z-index:10;
-}
-.phase-pill .dot-ind{
-  width:12px;height:12px;border-radius:50%;background:var(--accent);
-  animation:pulseLight 1.5s ease-in-out infinite;
-}
-@keyframes pulseLight{
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:0.4;transform:scale(0.8)}
-}
 </style>
 </head>
 <body>
-<!-- Rotate prompt for portrait mobile -->
 <div class="rotate-prompt">
   <div class="icon">📱</div>
   <h2>가로 모드로 돌려주세요</h2>
@@ -458,7 +373,6 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 
 <div class="stage" id="stage">
 
-  <!-- START SCREEN -->
   <div class="start-screen" id="startScreen">
     <div class="start-title">오늘의 <span class="accent">WOD</span></div>
     <div class="start-sub-en">WORKOUT OF THE DAY</div>
@@ -467,33 +381,25 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
       <div><div class="v">4</div><div class="k">ROUNDS</div></div>
       <div><div class="v">2:00</div><div class="k">WORK</div></div>
       <div><div class="v">1:00</div><div class="k">REST</div></div>
-      <div><div class="v">~11</div><div class="k">MIN</div></div>
+      <div><div class="v">11</div><div class="k">MIN</div></div>
     </div>
-
-    <!-- Voice selector -->
-    <div class="voice-selector">
-      <div class="voice-label">🎙️ AI 트레이너 음성 선택</div>
-      <select id="voiceSelect" class="voice-dropdown">
-        <option value="">로딩 중...</option>
-      </select>
-      <div class="voice-controls">
-        <label>속도
-          <input type="range" id="rateSlider" min="0.8" max="1.6" step="0.05" value="1.25">
-          <span id="rateVal">1.25x</span>
-        </label>
-        <label>톤
-          <input type="range" id="pitchSlider" min="0.5" max="1.5" step="0.05" value="0.85">
-          <span id="pitchVal">0.85</span>
-        </label>
-        <button class="voice-test" onclick="testVoice()">🔊 미리듣기</button>
-      </div>
+    <div class="start-options">
+      <label>
+        <input type="checkbox" id="voiceCheck" checked>
+        🎙️ 음성 안내
+      </label>
+      <label>
+        <input type="checkbox" id="musicCheck" checked>
+        🎵 배경음악
+      </label>
+      <label>
+        <input type="checkbox" id="beepCheck" checked>
+        🔔 비프음
+      </label>
     </div>
-
     <button class="start-btn" onclick="startWorkout()">START ▶</button>
-    <div class="start-tip">화면 녹화 시작 후 START 버튼을 누르세요</div>
   </div>
 
-  <!-- TOP -->
   <div class="top">
     <div style="display:flex;align-items:center">
       <div class="round-label">ROUND <span class="num" id="roundNum">1</span> / 4</div>
@@ -507,44 +413,42 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
     <div class="total-time">
       <span class="elapsed" id="totalElapsed">00:00</span>
       <span class="sep">/</span>
-      <span id="totalDuration">12:40</span>
+      <span id="totalDuration">11:00</span>
     </div>
   </div>
 
-  <div class="phase-pill">
-    <span class="dot-ind"></span>
-    <span id="phaseText">READY</span>
+  <!-- Audio controls (visible during workout) -->
+  <div class="audio-controls" id="audioControls" style="display:none">
+    <button class="audio-btn" id="muteBtn" onclick="toggleMuteAll()" title="전체 음소거">🔊</button>
+    <button class="audio-btn" id="musicBtn" onclick="toggleMusic()" title="배경음악 토글">🎵</button>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
-    <!-- Left: round structure -->
     <div class="round-structure">
       <div class="struct-label">ROUND STRUCTURE</div>
       <div class="step" id="step1">
-        <div class="step-icon"><span>1</span></div>
+        <div class="step-icon">1</div>
         <div class="step-content">
           <div class="step-title" id="step1Title">줄넘기 80개</div>
           <div class="step-sub">JUMP ROPE</div>
         </div>
       </div>
       <div class="step" id="step2">
-        <div class="step-icon"><span>2</span></div>
+        <div class="step-icon">2</div>
         <div class="step-content">
-          <div class="step-title" id="step2Title">남은 시간: 왕복달리기</div>
+          <div class="step-title" id="step2Title">남은시간: 왕복달리기</div>
           <div class="step-sub" id="step2Sub">SHUTTLE RUN</div>
         </div>
       </div>
     </div>
 
-    <!-- Center timer -->
     <div class="timer-wrap">
       <div class="state-label" id="stateLabel">PREPARE</div>
       <div class="timer-ring">
-        <svg viewBox="0 0 580 580">
-          <circle class="bg-ring" cx="290" cy="290" r="278"/>
-          <circle class="progress-ring" id="progressRing" cx="290" cy="290" r="278"
-            stroke-dasharray="1746" stroke-dashoffset="0"/>
+        <svg viewBox="0 0 760 760">
+          <circle class="bg-ring" cx="380" cy="380" r="366"/>
+          <circle class="progress-ring" id="progressRing" cx="380" cy="380" r="366"
+            stroke-dasharray="2299" stroke-dashoffset="0"/>
         </svg>
         <div class="timer-num" id="timerNum">20</div>
       </div>
@@ -552,15 +456,6 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
     </div>
   </div>
 
-  <!-- BOTTOM -->
-  <div class="bottom">
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
-    </div>
-    <div class="caption" id="caption">준비해주세요</div>
-  </div>
-
-  <!-- DONE -->
   <div class="done-screen" id="doneScreen">
     <h1>WELL DONE!</h1>
     <div class="ko-title">오늘의 WOD 완료</div>
@@ -569,6 +464,11 @@ body{display:flex;align-items:center;justify-content:center;-webkit-user-select:
 
   <div class="flash" id="flash"></div>
 </div>
+
+<!-- Background music playlist -->
+<!-- Add your mp3 files in the audio/ folder as bgm1.mp3, bgm2.mp3, etc. -->
+<!-- Any tracks not found will be skipped silently -->
+<audio id="bgMusic" preload="auto"></audio>
 
 <script>
 /* ========== RESPONSIVE SCALING ========== */
@@ -581,11 +481,8 @@ function updateStageScale(){
   stage.style.transform = `scale(${scale})`;
 }
 window.addEventListener('resize', updateStageScale);
-window.addEventListener('orientationchange', () => {
-  setTimeout(updateStageScale, 200);
-});
+window.addEventListener('orientationchange', () => setTimeout(updateStageScale, 200));
 document.addEventListener('DOMContentLoaded', updateStageScale);
-// also run after page load for mobile Safari/Chrome
 window.addEventListener('load', updateStageScale);
 
 /* ========== CONFIG ========== */
@@ -596,150 +493,116 @@ const rounds = [
   {jumpRope:50, exercise:'브이싯 농구공 트위스트', exerciseEn:'V-SIT BALL TWIST'},
 ];
 
-/* Full scenario with timing. TTS + display + beeps handled per-event. */
-/* Each round block:
-    Prep 20s  (20s intro speech + wait ~7s)
-    Count 10s (10,9,...1 spoken)
-    Work 120s (speech cues at 90, 60, 30s left; 5s countdown w/ beeps; "그만")
-    Rest 60s  ("X라운드 ... 기록해주세요")
-*/
-
-// Round 1: 20s prep + 120s work = 140s
-// Rounds 2-4: 60s rest (includes prep) + 120s work = 180s each (x3 = 540s)
-// Final record: 5s
-const TOTAL_DURATION = 140 + 540 + 5; // = 685s = 11:25
-document.getElementById('totalDuration').textContent = fmt(TOTAL_DURATION);
-
-/* ========== STATE ========== */
-let audioCtx = null;
-let totalSec = 0;
-let totalTimer = null;
+const TOTAL_DURATION = 11 * 60;
 
 /* ========== AUDIO ========== */
-function initAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+let audioCtx = null;
+let bgMusic = null;
+let enableVoice = true;
+let enableMusic = true;
+let enableBeep = true;
+let allMuted = false;
+
+/* ===== PLAYLIST =====
+   audio/ 폴더에 bgm1.mp3, bgm2.mp3, bgm3.mp3 ... 순서대로 넣으면
+   자동으로 순서대로 재생됩니다.
+   원하는 만큼 넣어도 됩니다 (1개 ~ 20개까지 자동 탐색).
+*/
+const MAX_TRACKS = 20;
+let playlistTracks = [];
+for(let i = 1; i <= MAX_TRACKS; i++){
+  playlistTracks.push(`audio/bgm${i}.mp3`);
 }
+let currentTrackIndex = 0;
+
+function initAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)() }catch(e){}
+  }
+  bgMusic = document.getElementById('bgMusic');
+  if(bgMusic){
+    bgMusic.volume = 0.25;
+    // When track ends, play next in playlist
+    bgMusic.addEventListener('ended', () => {
+      if(!enableMusic || allMuted) return;
+      playNextTrack();
+    });
+    // On error (file missing), try next - if all fail eventually loop
+    bgMusic.addEventListener('error', () => {
+      playNextTrack(true);
+    });
+  }
+}
+
+let errorAttempts = 0;
+async function playNextTrack(fromError=false){
+  if(!bgMusic || !enableMusic || allMuted) return;
+
+  if(fromError){
+    errorAttempts++;
+    // If we've tried all tracks and they all failed, give up silently
+    if(errorAttempts >= MAX_TRACKS){
+      errorAttempts = 0;
+      return;
+    }
+  } else {
+    errorAttempts = 0;
+  }
+
+  currentTrackIndex = (currentTrackIndex + 1) % playlistTracks.length;
+  bgMusic.src = playlistTracks[currentTrackIndex];
+  try{ await bgMusic.play() }catch(e){}
+}
+
+async function startPlaylist(){
+  if(!bgMusic || !enableMusic || allMuted) return;
+  currentTrackIndex = 0;
+  errorAttempts = 0;
+  bgMusic.src = playlistTracks[0];
+  try{ await bgMusic.play() }catch(e){ console.log('Playlist start failed:', e) }
+}
+
 function beep(freq=880, dur=0.15, type='sine', vol=0.4){
-  if(!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + dur);
+  if(!enableBeep || allMuted || !audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  }catch(e){}
 }
 function longBeep(){ beep(1200, 0.6, 'sine', 0.5) }
 
 /* TTS */
-let selectedVoice = null;
-let userRate = 1.25;
-let userPitch = 0.85;
-let allKoVoices = [];
-
+let koVoice = null;
 function loadVoice(){
+  if(!('speechSynthesis' in window)) return;
   const voices = speechSynthesis.getVoices();
-  allKoVoices = voices.filter(v => v.lang.startsWith('ko'));
-
-  // If no Korean voices, fall back to all voices
-  const voicesToShow = allKoVoices.length > 0 ? allKoVoices : voices;
-
-  const select = document.getElementById('voiceSelect');
-  if(!select) return;
-
-  select.innerHTML = '';
-
-  if(voicesToShow.length === 0){
-    const opt = document.createElement('option');
-    opt.value = '';
-    opt.textContent = '사용 가능한 음성 없음';
-    select.appendChild(opt);
-    return;
-  }
-
-  voicesToShow.forEach((v, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    // Show friendly name with gender hint
-    let label = v.name;
-    if(v.lang) label += ` (${v.lang})`;
-    // Try to detect gender from name
-    if(/female|woman|여|yuna|heami|seoyeon|sora/i.test(v.name)) label = '👩 ' + label;
-    else if(/male|man|남|jun|jin|minsu|sung/i.test(v.name)) label = '👨 ' + label;
-    else label = '🎙️ ' + label;
-    opt.textContent = label;
-    select.appendChild(opt);
-  });
-
-  // Default: pick a male voice if exists, else first
-  const defaultIdx = voicesToShow.findIndex(v => /male|man|남|jun|jin|minsu|sung/i.test(v.name));
-  select.selectedIndex = defaultIdx >= 0 ? defaultIdx : 0;
-  selectedVoice = voicesToShow[select.selectedIndex];
-
-  // Update on change
-  select.onchange = () => {
-    selectedVoice = voicesToShow[select.selectedIndex];
-  };
+  const koVoices = voices.filter(v => v.lang.startsWith('ko'));
+  // Prefer male-sounding voice
+  koVoice = koVoices.find(v => /male|man|남|jun|jin|minsu|sung/i.test(v.name)) || koVoices[0] || voices[0];
 }
-
 if('speechSynthesis' in window){
   speechSynthesis.onvoiceschanged = loadVoice;
   loadVoice();
-  // Retry after delay (some browsers load voices async)
   setTimeout(loadVoice, 500);
   setTimeout(loadVoice, 1500);
 }
-
-// Slider listeners
-document.addEventListener('DOMContentLoaded', () => {
-  const rateSlider = document.getElementById('rateSlider');
-  const pitchSlider = document.getElementById('pitchSlider');
-  const rateVal = document.getElementById('rateVal');
-  const pitchVal = document.getElementById('pitchVal');
-
-  if(rateSlider){
-    rateSlider.addEventListener('input', (e) => {
-      userRate = parseFloat(e.target.value);
-      rateVal.textContent = userRate.toFixed(2) + 'x';
-    });
-  }
-  if(pitchSlider){
-    pitchSlider.addEventListener('input', (e) => {
-      userPitch = parseFloat(e.target.value);
-      pitchVal.textContent = userPitch.toFixed(2);
-    });
-  }
-});
-
-function speak(text){
+function speak(text, rate=1.15, pitch=0.95){
   return new Promise(resolve => {
-    if(!('speechSynthesis' in window)){resolve();return}
+    if(!enableVoice || allMuted || !('speechSynthesis' in window)){resolve();return}
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ko-KR';
-    if(selectedVoice) u.voice = selectedVoice;
-    // Normal speech: slightly less aggressive than fight
-    u.rate = Math.max(0.8, userRate - 0.15);
-    u.pitch = Math.min(1.5, userPitch + 0.15);
-    u.volume = 1.0;
-    u.onend = resolve;
-    u.onerror = resolve;
-    speechSynthesis.speak(u);
-  });
-}
-// Trainer-style: user-selected rate/pitch
-function speakFight(text){
-  return new Promise(resolve => {
-    if(!('speechSynthesis' in window)){resolve();return}
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ko-KR';
-    if(selectedVoice) u.voice = selectedVoice;
-    u.rate = userRate;
-    u.pitch = userPitch;
+    if(koVoice) u.voice = koVoice;
+    u.rate = rate;
+    u.pitch = pitch;
     u.volume = 1.0;
     u.onend = resolve;
     u.onerror = resolve;
@@ -747,13 +610,52 @@ function speakFight(text){
   });
 }
 
-// Test voice preview
-function testVoice(){
-  // Unlock on user gesture
-  try{ speechSynthesis.resume() }catch(e){}
-  speakFight('좋아요! 파이팅! 끝까지 밀어붙여봅시다!');
+/* Music volume ducking while speaking */
+function duckMusic(){
+  if(bgMusic && !bgMusic.paused){
+    bgMusic.volume = 0.08;
+  }
 }
-window.testVoice = testVoice;
+function unduckMusic(){
+  if(bgMusic && !bgMusic.paused){
+    bgMusic.volume = 0.25;
+  }
+}
+
+/* Audio control buttons */
+function toggleMuteAll(){
+  allMuted = !allMuted;
+  const btn = document.getElementById('muteBtn');
+  if(allMuted){
+    btn.textContent = '🔇';
+    btn.classList.add('muted');
+    if(bgMusic) bgMusic.muted = true;
+    speechSynthesis.cancel();
+  }else{
+    btn.textContent = '🔊';
+    btn.classList.remove('muted');
+    if(bgMusic) bgMusic.muted = false;
+  }
+}
+function toggleMusic(){
+  enableMusic = !enableMusic;
+  const btn = document.getElementById('musicBtn');
+  if(!enableMusic){
+    btn.classList.add('muted');
+    if(bgMusic) bgMusic.pause();
+  }else{
+    btn.classList.remove('muted');
+    if(bgMusic){
+      if(bgMusic.src){
+        bgMusic.play().catch(()=>{});
+      }else{
+        startPlaylist();
+      }
+    }
+  }
+}
+window.toggleMuteAll = toggleMuteAll;
+window.toggleMusic = toggleMusic;
 
 /* ========== UTILS ========== */
 function fmt(s){
@@ -764,7 +666,6 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function setStage(cls){
   document.getElementById('stage').className = 'stage ' + cls;
 }
-function setPhase(txt){ document.getElementById('phaseText').textContent = txt }
 function setState(txt){ document.getElementById('stateLabel').textContent = txt }
 function setTimer(n, big=false){
   const t = document.getElementById('timerNum');
@@ -772,13 +673,17 @@ function setTimer(n, big=false){
   t.className = 'timer-num' + (big ? ' big' : '');
 }
 function setTimerSub(txt){ document.getElementById('timerSub').textContent = txt }
-function setCaption(txt){ document.getElementById('caption').textContent = txt }
-function setProgress(pct, ringTotal){
-  document.getElementById('progressFill').style.width = pct + '%';
+function setProgress(pct){
   const ring = document.getElementById('progressRing');
-  const dash = 1746;
+  const dash = 2299;
   ring.style.strokeDashoffset = dash * (pct/100);
 }
+
+document.getElementById('totalDuration').textContent = fmt(TOTAL_DURATION);
+
+let totalSec = 0;
+let totalTimer = null;
+let workoutStarted = false;
 
 function updateRoundUI(roundIdx){
   document.getElementById('roundNum').textContent = roundIdx + 1;
@@ -789,19 +694,25 @@ function updateRoundUI(roundIdx){
     else if(i === roundIdx) d.classList.add('active');
   });
   const r = rounds[roundIdx];
-  document.getElementById('step1Title').textContent = `줄넘기 ${r.jumpRope}개`;
-  document.getElementById('step2Title').textContent = `남은 시간: ${r.exercise}`;
+  const s1 = document.getElementById('step1Title');
+  const s2 = document.getElementById('step2Title');
+  s1.textContent = `줄넘기 ${r.jumpRope}개`;
+  s2.textContent = `남은시간: ${r.exercise}`;
   document.getElementById('step2Sub').textContent = r.exerciseEn;
-  setStep(0); // reset
+
+  s2.classList.remove('smaller','smallest');
+  if(r.exercise.length >= 10) s2.classList.add('smallest');
+  else if(r.exercise.length >= 5) s2.classList.add('smaller');
+
+  showBothSteps();
 }
-function setStep(active){
-  // active: 0 = none yet, 1 = jump rope, 2 = main exercise
-  const s1 = document.getElementById('step1');
-  const s2 = document.getElementById('step2');
-  s1.classList.remove('active','done');
-  s2.classList.remove('active','done');
-  if(active === 1){ s1.classList.add('active') }
-  else if(active === 2){ s1.classList.add('done'); s2.classList.add('active') }
+function showBothSteps(){
+  document.getElementById('step1').classList.remove('dim');
+  document.getElementById('step2').classList.remove('dim');
+}
+function dimBothSteps(){
+  document.getElementById('step1').classList.add('dim');
+  document.getElementById('step2').classList.add('dim');
 }
 
 function startTotalTimer(){
@@ -809,7 +720,9 @@ function startTotalTimer(){
   document.getElementById('totalElapsed').textContent = '00:00';
   totalTimer = setInterval(() => {
     totalSec++;
-    document.getElementById('totalElapsed').textContent = fmt(totalSec);
+    if(totalSec <= TOTAL_DURATION){
+      document.getElementById('totalElapsed').textContent = fmt(totalSec);
+    }
   }, 1000);
 }
 function stopTotalTimer(){ clearInterval(totalTimer) }
@@ -821,262 +734,224 @@ function flash(){
   f.classList.add('on');
 }
 
-/* ========== COUNTDOWN (10 ~ 1) ========== */
-async function countdown10(){
-  setStage('count');
-  setPhase('COUNTDOWN');
-  setState('GET READY');
-  setTimerSub('COUNTDOWN');
-  // "10 9 8 7 6 5 4 3 2 1" spoken as "십, 구, 팔 ..."
-  const words = ['10','9','8','7','6','5','4','3','2','1'];
-  const koWords = ['십','구','팔','칠','육','오','사','삼','이','일'];
-  for(let i = 0; i < 10; i++){
-    setTimer(words[i], true);
-    setCaption(koWords[i]);
-    setProgress(((i+1)/10)*100);
-    // beep on 3,2,1
-    if(i >= 7){ beep(1000, 0.15, 'square', 0.5) }
-    else { beep(660, 0.08, 'sine', 0.25) }
-    // speak in parallel (short)
-    speak(koWords[i]);
-    await sleep(1000);
-  }
-}
-
-/* ========== 5s FINAL COUNTDOWN ========== */
-async function countdown5(){
-  const nums = ['5','4','3','2','1'];
-  const ko = ['오','사','삼','이','일'];
-  for(let i = 0; i < 5; i++){
-    setTimer(nums[i], true);
-    setCaption(ko[i]);
-    if(i >= 2){ beep(1200, 0.15, 'square', 0.55) }
-    else { beep(800, 0.1, 'sine', 0.3) }
-    speakFight(ko[i]);
-    await sleep(1000);
-  }
-  setTimer('0', true);
-  setCaption('그만!');
-  longBeep();
-  flash();
-  await speakFight('그만!');
-  await sleep(800);
-}
-
-/* ========== COUNT DOWN TIMER (seconds) ========== */
-async function runTimer(seconds, {onTick, checkpoints={}}={}){
-  for(let s = seconds; s >= 1; s--){
-    setTimer(fmt(s));
-    setProgress(((seconds-s)/seconds)*100);
-    if(onTick) onTick(s);
-    if(checkpoints[s]){ await checkpoints[s](); }
-    await sleep(1000);
-  }
-  setTimer('00:00');
-}
-
-/* ========== PREP (20s total, last 10s = countdown) ========== */
+/* ========== PHASE: PREP (20s, last 10s = countdown) ========== */
 async function prepPhase(roundIdx){
   const r = rounds[roundIdx];
   setStage('prep');
-  setPhase('PREPARE');
   setState('PREPARE');
   setTimerSub('SECONDS');
   updateRoundUI(roundIdx);
-  setStep(0);
 
-  // Announce full intro during first 10 seconds
-  const intro = `20초 후에 운동을 시작합니다. ${roundIdx+1}라운드에는 줄넘기 ${r.jumpRope}개를 실시합니다. 줄넘기를 들고 준비해주세요. 줄넘기 후에는 ${r.exercise}를 실시합니다.`;
-  setCaption(`${roundIdx+1}라운드 준비`);
-  speak(intro);
+  // Speak intro at start
+  duckMusic();
+  speak(`20초 후에 운동을 시작합니다. ${roundIdx+1}라운드에는 줄넘기 ${r.jumpRope}개를 실시합니다. 줄넘기를 들고 준비해주세요. 줄넘기 후에는 ${r.exercise}를 실시합니다.`);
 
-  // First 10 seconds: intro/prep (20 -> 11)
+  // First 10 seconds (20 -> 11)
   for(let s = 20; s >= 11; s--){
     setTimer(s);
     setProgress(((20-s)/20)*100);
-    if(s === 17) setCaption('줄넘기를 준비해주세요');
-    if(s === 13) setCaption(`줄넘기 후에는 ${r.exercise}`);
     await sleep(1000);
   }
 
-  // Cancel any remaining intro speech before countdown
   speechSynthesis.cancel();
+  unduckMusic();
 
-  // Last 10 seconds: countdown with beeps (10 -> 1)
+  // Last 10 seconds countdown
   setStage('count');
-  setPhase('COUNTDOWN');
   setState('GET READY');
   setTimerSub('COUNTDOWN');
   const koWords = ['십','구','팔','칠','육','오','사','삼','이','일'];
   for(let s = 10; s >= 1; s--){
     setTimer(s, true);
-    setCaption(koWords[10-s]);
     setProgress(((20-s)/20)*100);
-    // beep on 3,2,1
+    // beep
     if(s <= 3){ beep(1000, 0.15, 'square', 0.5) }
     else { beep(660, 0.08, 'sine', 0.25) }
-    speak(koWords[10-s]);
+    speak(koWords[10-s], 1.3, 1.0);
     await sleep(1000);
   }
 }
 
-/* ========== WORK PHASE (2:00) ========== */
+/* ========== PHASE: WORK (2:00) ========== */
 async function workPhase(roundIdx){
-  const r = rounds[roundIdx];
   setStage('work');
-  setPhase('WORK');
   setState('WORK');
   setTimerSub('ROUND TIMER');
-  setStep(1); // jump rope active
-  setCaption('줄넘기 시작!');
-  await speakFight('줄넘기 시작! 가자!');
+  showBothSteps();
+
+  duckMusic();
+  await speak('줄넘기 시작!', 1.2, 1.0);
+  unduckMusic();
   beep(1200, 0.4, 'sine', 0.5);
 
-  // 120 -> 1 countdown
-  let announcedSwitch = false;
-  for(let s = 120; s >= 6; s--){
+  for(let s = 120; s >= 1; s--){
+    if(s <= 10){
+      setStage('work urgent');
+      setState('FINISH!');
+    }
     setTimer(fmt(s));
     setProgress(((120-s)/120)*100);
 
-    const skipTime = Math.round(r.jumpRope * 0.75);
-    const switchAt = 120 - skipTime;
-    if(!announcedSwitch && s <= switchAt){
-      setStep(2);
-      setCaption(`남은 시간: ${r.exercise}!`);
-      speakFight(`${r.exercise} 시작! 파이팅!`);
-      announcedSwitch = true;
-    }
+    // checkpoints
+    if(s === 90){ duckMusic(); speak('1분 30초 남았습니다', 1.15, 0.95); setTimeout(unduckMusic, 2500) }
+    if(s === 60){ duckMusic(); speak('1분 남았습니다', 1.15, 0.95); setTimeout(unduckMusic, 2000) }
+    if(s === 30){ duckMusic(); speak('30초 남았습니다', 1.15, 0.95); setTimeout(unduckMusic, 2000) }
 
-    // checkpoints - trainer style
-    if(s === 90){ speakFight('1분 30초 남았습니다. 계속 갑시다!'); setCaption('1분 30초 남았습니다') }
-    if(s === 60){ speakFight('1분 남았습니다. 힘내세요!'); setCaption('1분 남았습니다') }
-    if(s === 30){ speakFight('30초! 끝까지 밀어붙이세요!'); setCaption('30초 남았습니다') }
-    if(s === 10){ setCaption('마지막 10초!') }
+    // final 5 seconds countdown with beeps
+    if(s === 5){
+      speak('오', 1.3, 1.0);
+      beep(800, 0.1, 'sine', 0.3);
+    }
+    if(s === 4){ speak('사', 1.3, 1.0); beep(800, 0.1, 'sine', 0.3) }
+    if(s === 3){ speak('삼', 1.3, 1.0); beep(1200, 0.15, 'square', 0.55) }
+    if(s === 2){ speak('이', 1.3, 1.0); beep(1200, 0.15, 'square', 0.55) }
+    if(s === 1){ speak('일', 1.3, 1.0); beep(1200, 0.15, 'square', 0.55) }
 
     await sleep(1000);
   }
-  // final 5-1 + 그만
-  await countdown5();
-  setStep(0);
+
+  // 그만!
+  setTimer('00:00');
+  flash();
+  longBeep();
+  duckMusic();
+  await speak('그만!', 1.2, 1.0);
+  unduckMusic();
+  await sleep(500);
 }
 
-/* ========== REST PHASE (1:00 total - last 20s = prep for next round) ========== */
+/* ========== PHASE: REST (1:00) - includes prep for next round ========== */
 async function restPhase(roundIdx){
   const r = rounds[roundIdx];
   const nextR = rounds[roundIdx+1];
   setStage('rest');
-  setPhase('REST');
   setState('REST');
   setTimerSub('RECORD YOUR REPS');
+  dimBothSteps();
 
-  const msg = `${roundIdx+1}라운드 ${r.exercise} 갯수를 기록해주세요.`;
-  setCaption(msg);
-  speak(msg);
+  duckMusic();
+  await speak(`${roundIdx+1}라운드 ${r.exercise} 갯수를 기록해주세요.`, 1.1, 0.95);
+  unduckMusic();
 
-  // First 40 seconds: rest + record (60 -> 21)
+  // First 40 seconds: rest (60 -> 21)
   for(let s = 60; s >= 21; s--){
     setTimer(fmt(s));
     setProgress(((60-s)/60)*100);
-    if(s === 50) setCaption(`${roundIdx+1}R ${r.exercise} 갯수 기록`);
-    if(s === 35) setCaption('잠시 휴식하세요');
-    if(s === 25) setCaption('곧 다음 라운드 준비');
     await sleep(1000);
   }
 
-  // Last 20 seconds: prep for next round (stays in rest phase UI but switches to prep mode)
+  // Last 20 seconds: prep for next round
   setStage('prep');
-  setPhase('NEXT UP');
   setState('GET READY');
   setTimerSub('NEXT ROUND');
-  updateRoundUI(roundIdx+1);
-  setStep(0);
+  updateRoundUI(roundIdx + 1);
 
-  const intro = `${roundIdx+2}라운드 시작합니다! 줄넘기 ${nextR.jumpRope}개, 그리고 ${nextR.exercise}! 준비하세요, 파이팅!`;
-  setCaption(`${roundIdx+2}라운드 준비!`);
-  speakFight(intro);
+  duckMusic();
+  speak(`20초 후에 운동을 시작합니다. ${roundIdx+2}라운드에는 줄넘기 ${nextR.jumpRope}개를 실시합니다. 줄넘기를 들고 준비해주세요. 줄넘기 후에는 ${nextR.exercise}를 실시합니다.`, 1.15, 0.95);
 
-  // 20 -> 11 (intro speech time)
+  // 20 -> 11
   for(let s = 20; s >= 11; s--){
     setTimer(s);
     setProgress(((60-s)/60)*100);
-    if(s === 17) setCaption('줄넘기 들고 준비!');
-    if(s === 13) setCaption(`줄넘기 후 ${nextR.exercise}!`);
     await sleep(1000);
   }
-
-  // Cancel remaining intro, start countdown
   speechSynthesis.cancel();
+  unduckMusic();
 
-  // 10 -> 1 countdown with beeps
+  // 10 -> 1 countdown
   setStage('count');
-  setPhase('COUNTDOWN');
   setState('GET READY');
   setTimerSub('COUNTDOWN');
   const koWords = ['십','구','팔','칠','육','오','사','삼','이','일'];
   for(let s = 10; s >= 1; s--){
     setTimer(s, true);
-    setCaption(koWords[10-s]);
     setProgress(((60-s)/60)*100);
     if(s <= 3){ beep(1000, 0.15, 'square', 0.5) }
     else { beep(660, 0.08, 'sine', 0.25) }
-    speakFight(koWords[10-s]);
+    speak(koWords[10-s], 1.3, 1.0);
     await sleep(1000);
   }
 }
 
 /* ========== MAIN LOOP ========== */
 async function startWorkout(){
+  if(workoutStarted) return;
+  workoutStarted = true;
+
+  // Read settings
+  enableVoice = document.getElementById('voiceCheck').checked;
+  enableMusic = document.getElementById('musicCheck').checked;
+  enableBeep  = document.getElementById('beepCheck').checked;
+
   initAudio();
-  // iOS TTS unlock - need a silent utterance first on user gesture
+
+  // iOS TTS unlock
   try{
     speechSynthesis.resume();
     const silent = new SpeechSynthesisUtterance(' ');
     silent.volume = 0;
     speechSynthesis.speak(silent);
   }catch(e){}
-  // Ensure audio context is running (iOS)
   if(audioCtx && audioCtx.state === 'suspended'){
     try{ await audioCtx.resume() }catch(e){}
   }
+
+  // Start background music playlist (bgm1.mp3, bgm2.mp3, ... in order)
+  if(enableMusic){
+    startPlaylist();
+  }
+
   document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('audioControls').style.display = 'flex';
   updateStageScale();
 
+  // Initial prep (not counted in 11:00)
+  await prepPhase(0);
+
+  // Start 11:00 workout timer
   startTotalTimer();
 
   for(let i = 0; i < rounds.length; i++){
-    // Only first round needs separate prep; subsequent rounds' prep is included in previous rest
-    if(i === 0){
-      await prepPhase(i);
-    }
     await workPhase(i);
     if(i < rounds.length - 1){
-      await restPhase(i);  // includes prep for next round
+      await restPhase(i);
     } else {
-      // Final round: still announce recording
+      // Final round record
       const r = rounds[i];
-      const msg = `${i+1}라운드 ${r.exercise} 갯수를 기록해주세요.`;
       setStage('rest');
-      setPhase('RECORD');
-      setState('RECORD');
-      setTimerSub('FINAL ROUND');
-      setCaption(msg);
-      await speak(msg);
+      setState('FINISHED');
+      setTimerSub('GREAT JOB!');
+      dimBothSteps();
+      duckMusic();
+      await speak(`${i+1}라운드 ${r.exercise} 갯수를 기록해주세요. 오늘의 운동을 모두 완료했습니다. 수고하셨습니다!`, 1.1, 0.95);
+      unduckMusic();
       await sleep(3000);
     }
   }
 
   // DONE
   stopTotalTimer();
+  document.getElementById('totalElapsed').textContent = fmt(TOTAL_DURATION);
   setStage('done');
   document.getElementById('doneScreen').classList.add('show');
   flash();
   longBeep();
-  await sleep(500);
-  longBeep();
-  await speak('오늘의 운동을 모두 완료했습니다. 수고하셨습니다.');
+
+  // Fade out music after 5 seconds
+  setTimeout(() => {
+    if(bgMusic){
+      const fade = setInterval(() => {
+        if(bgMusic.volume > 0.02){
+          bgMusic.volume = Math.max(0, bgMusic.volume - 0.02);
+        }else{
+          bgMusic.pause();
+          clearInterval(fade);
+        }
+      }, 100);
+    }
+  }, 5000);
 }
 
-// expose
 window.startWorkout = startWorkout;
 </script>
 </body>
